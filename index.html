@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SciTikZ Studio v5.0 Pro - Science Setup & TikZ Studio</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: { 750: '#1e293b', 850: '#0f172a', 950: '#020617' },
+            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', cyan: '#06b6d4', teal: '#10b981' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- KaTeX for Math rendering -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/katex/0.16.8/katex.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/katex/0.16.8/katex.min.js"></script>
+
+  <!-- Prism.js for LaTeX highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-latex.min.js"></script>
+
+  <!-- Fabric.js Canvas Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    
+    .canvas-grid-bg {
+      background-color: #0b1329;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 0),
+        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+      background-size: 20px 20px, 100px 100px;
+    }
+
+    pre[class*="language-"] {
+      margin: 0 !important;
+      border-radius: 0.5rem;
+      background: #090d16 !important;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.825rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none font-sans">
+
+  <!-- TOP NAVBAR -->
+  <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-cyan flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+        <i class="fa-solid fa-flask-vial text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base tracking-wide flex items-center gap-2">
+          SciTikZ Studio 
+          <span class="text-[10px] font-semibold bg-brand-500/20 text-brand-cyan px-2 py-0.5 rounded-full border border-brand-cyan/30">v5.0 Pro</span>
+        </h1>
+        <p class="text-[11px] text-slate-400">Expanded Science & Circuit Apparatus TikZ Studio</p>
+      </div>
+    </div>
+
+    <!-- Presets -->
+    <div class="hidden lg:flex items-center gap-2 bg-slate-800/80 p-1 rounded-lg border border-slate-700/60">
+      <span class="text-xs text-slate-400 pl-2 font-medium">Presets:</span>
+      <button onclick="loadPreset('reflux')" class="px-2.5 py-1 text-xs rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-vial text-amber-400"></i> Reflux Distillation
+      </button>
+      <button onclick="loadPreset('interferometer')" class="px-2.5 py-1 text-xs rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-atom text-cyan-400"></i> Interferometer
+      </button>
+      <button onclick="loadPreset('555_timer')" class="px-2.5 py-1 text-xs rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-microchip text-emerald-400"></i> 555 Oscillator
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <button id="snap-btn" onclick="toggleSnap()" class="px-2.5 py-1.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-border-all text-brand-cyan"></i> Snap Grid
+      </button>
+      <button onclick="deleteSelected()" title="Delete Selected (Delete / Backspace)" class="p-1.5 bg-slate-800 border border-slate-700 hover:bg-rose-900/40 text-slate-300 hover:text-rose-300 rounded-lg text-xs transition">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <div class="h-5 w-px bg-slate-800 mx-1"></div>
+      <button onclick="copyLaTeX()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+        <i class="fa-regular fa-copy text-indigo-400"></i> Copy TikZ
+      </button>
+      <button onclick="downloadLaTeX()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-download"></i> Download .tex
+      </button>
+    </div>
+  </header>
+
+  <!-- WORKSPACE -->
+  <div class="flex flex-1 overflow-hidden relative">
+
+    <!-- LEFT PALETTE -->
+    <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 z-10">
+      <div class="p-3 border-b border-slate-800">
+        <input type="text" id="lib-search" onkeyup="filterComponents()" placeholder="Search condensers, polarizers, MOSFETs..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition" />
+      </div>
+
+      <!-- Categories -->
+      <div class="flex border-b border-slate-800 bg-slate-900/50 p-1 gap-1">
+        <button onclick="switchTab('chem')" id="tab-chem" class="tab-btn flex-1 py-1.5 text-xs rounded-md font-medium text-brand-cyan bg-slate-800 border border-slate-700 flex items-center justify-center gap-1">
+          <i class="fa-solid fa-flask"></i> Chem
+        </button>
+        <button onclick="switchTab('optics')" id="tab-optics" class="tab-btn flex-1 py-1.5 text-xs rounded-md font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1">
+          <i class="fa-solid fa-microscope"></i> Optics
+        </button>
+        <button onclick="switchTab('elec')" id="tab-elec" class="tab-btn flex-1 py-1.5 text-xs rounded-md font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1">
+          <i class="fa-solid fa-bolt"></i> Circuit
+        </button>
+        <button onclick="switchTab('draw')" id="tab-draw" class="tab-btn flex-1 py-1.5 text-xs rounded-md font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1">
+          <i class="fa-solid fa-ruler-combined"></i> Tools
+        </button>
+      </div>
+
+      <!-- Component List -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-4" id="component-container">
+
+        <!-- CHEMISTRY -->
+        <div id="sec-chem" class="space-y-3">
+          <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reactors, Condensers & Analytical</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div onclick="addSciObject('beaker')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-flask-vial text-xl text-cyan-400"></i>
+              <span class="text-xs text-slate-300">Beaker</span>
+            </div>
+            <div onclick="addSciObject('erlenmeyer')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-flask text-xl text-indigo-400"></i>
+              <span class="text-xs text-slate-300">Erlenmeyer</span>
+            </div>
+            <div onclick="addSciObject('liebig_condenser')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-bars-staggered text-xl text-sky-400"></i>
+              <span class="text-xs text-slate-300">Liebig Condenser</span>
+            </div>
+            <div onclick="addSciObject('vigreux_column')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-align-center text-xl text-emerald-400"></i>
+              <span class="text-xs text-slate-300">Vigreux Column</span>
+            </div>
+            <div onclick="addSciObject('gas_syringe')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-syringe text-xl text-purple-400"></i>
+              <span class="text-xs text-slate-300">Gas Syringe</span>
+            </div>
+            <div onclick="addSciObject('ph_meter')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-gauge-high text-xl text-teal-400"></i>
+              <span class="text-xs text-slate-300">pH Meter Probe</span>
+            </div>
+            <div onclick="addSciObject('analytical_balance')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-scale-balanced text-xl text-amber-400"></i>
+              <span class="text-xs text-slate-300">Digital Scale</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OPTICS -->
+        <div id="sec-optics" class="space-y-3 hidden">
+          <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Lasers, Polarizers & Detectors</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div onclick="addSciObject('laser')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-wifi text-xl text-rose-500"></i>
+              <span class="text-xs text-slate-300">Laser Source</span>
+            </div>
+            <div onclick="addSciObject('polarizer')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-sliders text-xl text-amber-400"></i>
+              <span class="text-xs text-slate-300">Waveplate ($\lambda/4$)</span>
+            </div>
+            <div onclick="addSciObject('photodiode_detector')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-sun text-xl text-cyan-400"></i>
+              <span class="text-xs text-slate-300">Photodetector</span>
+            </div>
+            <div onclick="addSciObject('beam_splitter')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-border-none text-xl text-indigo-400"></i>
+              <span class="text-xs text-slate-300">Beam Splitter</span>
+            </div>
+            <div onclick="addSciObject('prism')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-play text-xl text-cyan-300 -rotate-90"></i>
+              <span class="text-xs text-slate-300">Glass Prism</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ELECTRONICS -->
+        <div id="sec-elec" class="space-y-3 hidden">
+          <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ICs, Semiconductors & Logic</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div onclick="addSciObject('mosfet')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-microchip text-xl text-emerald-400"></i>
+              <span class="text-xs text-slate-300">N-MOSFET</span>
+            </div>
+            <div onclick="addSciObject('timer_555')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-memory text-xl text-purple-400"></i>
+              <span class="text-xs text-slate-300">555 Timer IC</span>
+            </div>
+            <div onclick="addSciObject('gate_and')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-microchip text-xl text-amber-400"></i>
+              <span class="text-xs text-slate-300">AND Gate</span>
+            </div>
+            <div onclick="addSciObject('gate_or')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-network-wired text-xl text-cyan-400"></i>
+              <span class="text-xs text-slate-300">OR Gate</span>
+            </div>
+            <div onclick="addSciObject('gate_xor')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-code-fork text-xl text-rose-400"></i>
+              <span class="text-xs text-slate-300">XOR Gate</span>
+            </div>
+            <div onclick="addSciObject('resistor')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-wave-square text-xl text-emerald-400"></i>
+              <span class="text-xs text-slate-300">Resistor ($R$)</span>
+            </div>
+            <div onclick="addSciObject('capacitor')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-pause text-xl text-purple-400 rotate-90"></i>
+              <span class="text-xs text-slate-300">Capacitor ($C$)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOOLS -->
+        <div id="sec-draw" class="space-y-3 hidden">
+          <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Measurements & Callouts</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div onclick="addSciObject('dimension_ruler')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-ruler-horizontal text-xl text-amber-400"></i>
+              <span class="text-xs text-slate-300 font-bold">Dimension Ruler</span>
+            </div>
+            <div onclick="addSciObject('text_label')" class="comp-card bg-slate-800/60 hover:bg-slate-800 border border-slate-800 hover:border-brand-cyan/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-font text-xl text-indigo-400"></i>
+              <span class="text-xs text-slate-300">LaTeX Formula</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- CANVAS VIEWPORT -->
+    <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-950">
+      <div class="absolute top-4 left-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1.5 rounded-xl shadow-xl flex items-center gap-1">
+        <button id="tool-select" onclick="setTool('select')" class="tool-btn p-2 rounded-lg bg-brand-600 text-white transition" title="Select Tool (V)">
+          <i class="fa-solid fa-arrow-pointer text-xs"></i>
+        </button>
+        <button id="tool-wire" onclick="setTool('wire')" class="tool-btn p-2 rounded-lg text-slate-400 hover:text-white transition" title="Connect Wire Pins">
+          <i class="fa-solid fa-bezier-curve text-xs"></i>
+        </button>
+      </div>
+
+      <div id="canvas-wrapper" class="flex-1 w-full h-full overflow-hidden canvas-grid-bg relative">
+        <canvas id="sci-canvas"></canvas>
+      </div>
+    </main>
+
+    <!-- RIGHT INSPECTOR -->
+    <aside class="w-96 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 z-10">
+      <div class="flex border-b border-slate-800 bg-slate-900/80 p-1 gap-1">
+        <button onclick="switchRightTab('props')" id="rtab-props" class="rtab-btn flex-1 py-2 text-xs font-semibold rounded-md text-brand-cyan bg-slate-800 border border-slate-700 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-sliders"></i> Properties
+        </button>
+        <button onclick="switchRightTab('code')" id="rtab-code" class="rtab-btn flex-1 py-2 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-code"></i> TikZ Code
+        </button>
+      </div>
+
+      <div id="rsec-props" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div id="no-selection-msg" class="py-12 flex flex-col items-center justify-center text-center text-slate-500 gap-3">
+          <i class="fa-solid fa-arrow-pointer text-3xl opacity-40"></i>
+          <p class="text-xs">Select any lab item or dimension ruler to customize parameters.</p>
+        </div>
+
+        <div id="active-inspector" class="space-y-4 hidden">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <span id="inspect-title" class="font-bold text-sm text-brand-cyan uppercase">Properties</span>
+            <div class="flex gap-1">
+              <button onclick="duplicateSelected()" title="Duplicate (Ctrl+D)" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs"><i class="fa-solid fa-clone"></i></button>
+              <button onclick="flipSelectedX()" title="Flip Horizontal" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs"><i class="fa-solid fa-arrows-left-right"></i></button>
+              <button onclick="deleteSelected()" title="Delete (Delete / Backspace)" class="p-1.5 bg-slate-800 hover:bg-rose-900/50 text-rose-400 rounded text-xs"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs text-slate-400 font-medium">LaTeX Label / Value</label>
+            <input type="text" id="prop-label" oninput="updateActiveObjectProps()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono focus:outline-none" />
+            <div id="katex-preview" class="p-2 bg-slate-950/60 border border-slate-800/80 rounded-lg text-xs text-center min-h-[32px] flex items-center justify-center text-indigo-300"></div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="space-y-1">
+              <label class="text-[11px] text-slate-400">Rotation Angle</label>
+              <input type="number" id="prop-rot" value="0" oninput="updateActiveObjectProps()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 font-mono" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[11px] text-slate-400">Scale Factor</label>
+              <input type="number" id="prop-scale" step="0.1" value="1.0" oninput="updateActiveObjectProps()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 font-mono" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rsec-code" class="flex-1 flex flex-col overflow-hidden hidden">
+        <div class="p-3 border-b border-slate-800 bg-slate-950/70">
+          <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <input type="checkbox" id="standalone-toggle" checked onchange="generateTikZCode()" class="accent-brand-500 rounded" />
+            <span>Standalone Preamble</span>
+          </label>
+        </div>
+        <div class="flex-1 relative overflow-auto p-3 bg-slate-950">
+          <pre id="tikz-code-container" class="language-latex"><code id="tikz-code" class="language-latex">% Generating TikZ code...</code></pre>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-2xl opacity-0 pointer-events-none transition-all duration-300 z-50">
+    <span id="toast-msg">Notification</span>
+  </div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    let canvas, currentTool = 'select', isSnapToGrid = true, wireStartPin = null;
+    let wires = [];
+    const GRID_SIZE = 20;
+
+    window.onload = function () {
+      initCanvas();
+      loadPreset('reflux');
+      setupShortcuts();
+    };
+
+    function initCanvas() {
+      const wrapper = document.getElementById('canvas-wrapper');
+      canvas = new fabric.Canvas('sci-canvas', {
+        width: wrapper.clientWidth,
+        height: wrapper.clientHeight,
+        backgroundColor: 'transparent',
+        selection: true
+      });
+
+      window.addEventListener('resize', () => {
+        canvas.setWidth(wrapper.clientWidth);
+        canvas.setHeight(wrapper.clientHeight);
+        canvas.renderAll();
+      });
+
+      canvas.on('object:scaling', (e) => {
+        const obj = e.target;
+        if (obj && obj.sciData && obj.sciData.sciType === 'dimension_ruler') {
+          updateRulerLengthLabel(obj);
+        }
+      });
+
+      canvas.on('object:moving', (e) => {
+        if (isSnapToGrid) {
+          e.target.set({
+            left: Math.round(e.target.left / GRID_SIZE) * GRID_SIZE,
+            top: Math.round(e.target.top / GRID_SIZE) * GRID_SIZE
+          });
+        }
+        updateWires();
+        generateTikZCode();
+      });
+
+      canvas.on('selection:created', onObjectSelected);
+      canvas.on('selection:updated', onObjectSelected);
+      canvas.on('selection:cleared', onSelectionCleared);
+      canvas.on('mouse:down', onMouseDown);
+    }
+
+    function addSciObject(type) {
+      const center = canvas.getCenter();
+      let group;
+
+      const baseData = { sciType: type, labelText: getInitialLabel(type) };
+
+      if (type === 'dimension_ruler') {
+        group = buildDimensionRulerGroup(baseData);
+      } else if (type === 'beaker') {
+        const outer = new fabric.Path('M -30 -40 L -30 40 Q -30 45 -25 45 L 25 45 Q 30 45 30 40 L 30 -40 M -35 -40 L -25 -40 M 25 -40 L 35 -40', { stroke: '#e2e8f0', strokeWidth: 3, fill: 'transparent' });
+        const liquid = new fabric.Rect({ left: -28, top: 0, width: 56, height: 40, fill: '#3b82f6', opacity: 0.5 });
+        group = new fabric.Group([liquid, outer]);
+      } else if (type === 'liebig_condenser') {
+        const inner = new fabric.Rect({ left: -8, top: -70, width: 16, height: 140, stroke: '#e2e8f0', strokeWidth: 2, fill: 'transparent' });
+        const jacket = new fabric.Rect({ left: -22, top: -50, width: 44, height: 100, stroke: '#06b6d4', strokeWidth: 2, fill: 'rgba(6,182,212,0.15)' });
+        group = new fabric.Group([inner, jacket]);
+      } else if (type === 'timer_555') {
+        const body = new fabric.Rect({ left: -30, top: -40, width: 60, height: 80, rx: 4, fill: '#1e293b', stroke: '#10b981', strokeWidth: 2 });
+        const txt = new fabric.Text('NE555', { left: -22, top: -10, fontSize: 13, fill: '#10b981', fontFamily: 'monospace' });
+        group = new fabric.Group([body, txt]);
+      } else if (type === 'gate_and') {
+        const body = new fabric.Path('M -30 -20 L 0 -20 A 20 20 0 0 1 0 20 L -30 20 Z', { stroke: '#f59e0b', strokeWidth: 3, fill: 'rgba(245,158,11,0.1)' });
+        group = new fabric.Group([body]);
+      } else if (type === 'mosfet') {
+        const line = new fabric.Line([0, -25, 0, 25], { stroke: '#10b981', strokeWidth: 3 });
+        const gMark = new fabric.Line([-20, 0, -5, 0], { stroke: '#10b981', strokeWidth: 3 });
+        group = new fabric.Group([line, gMark]);
+      } else {
+        const shape = new fabric.Circle({ radius: 25, fill: '#334155', stroke: '#cbd5e1', strokeWidth: 2 });
+        group = new fabric.Group([shape]);
+      }
+
+      group.set({ left: center.left - 50, top: center.top - 20, selectable: true, hasControls: true });
+      group.sciData = baseData;
+      canvas.add(group);
+      canvas.setActiveObject(group);
+      canvas.renderAll();
+      setTool('select');
+      generateTikZCode();
+      showToast(`Added ${type.replace('_', ' ')}`);
+    }
+
+    function buildDimensionRulerGroup(data) {
+      const lineLengthPx = 150;
+      const tickH = 10;
+
+      const mainLine = new fabric.Line([-lineLengthPx/2, 0, lineLengthPx/2, 0], { stroke: '#f59e0b', strokeWidth: 2 });
+      const leftTick = new fabric.Line([-lineLengthPx/2, -tickH, -lineLengthPx/2, tickH], { stroke: '#f59e0b', strokeWidth: 2 });
+      const rightTick = new fabric.Line([lineLengthPx/2, -tickH, lineLengthPx/2, tickH], { stroke: '#f59e0b', strokeWidth: 2 });
+      
+      const leftArrow = new fabric.Path('M ' + (-lineLengthPx/2) + ' 0 L ' + (-lineLengthPx/2 + 8) + ' -4 L ' + (-lineLengthPx/2 + 8) + ' 4 Z', { fill: '#f59e0b' });
+      const rightArrow = new fabric.Path('M ' + (lineLengthPx/2) + ' 0 L ' + (lineLengthPx/2 - 8) + ' -4 L ' + (lineLengthPx/2 - 8) + ' 4 Z', { fill: '#f59e0b' });
+
+      const label = new fabric.Text('3.0 cm', {
+        left: -20, top: -22, fontSize: 13, fill: '#f59e0b', fontFamily: 'monospace', fontWeight: 'bold'
+      });
+
+      const group = new fabric.Group([mainLine, leftTick, rightTick, leftArrow, rightArrow, label], { subTargetCheck: false });
+      group.sciData = data;
+      return group;
+    }
+
+    function updateRulerLengthLabel(group) {
+      if (!group || !group.sciData) return;
+      const currentWidthPx = 150 * (group.scaleX || 1.0);
+      const calculatedCm = (currentWidthPx / 50.0).toFixed(1);
+      
+      const labelStr = `${calculatedCm} cm`;
+      group.sciData.labelText = `$${labelStr}$`;
+
+      const textObj = group.getObjects().find(o => o.type === 'text');
+      if (textObj) {
+        textObj.set({ text: labelStr });
+        canvas.renderAll();
+      }
+
+      document.getElementById('prop-label').value = group.sciData.labelText;
+      updateMathPreview(group.sciData.labelText);
+      generateTikZCode();
+    }
+
+    function getInitialLabel(type) {
+      if (type === 'dimension_ruler') return '$3.0\text{ cm}$';
+      if (type === 'resistor') return '$R = 10\,\text{k}\Omega$';
+      if (type === 'timer_555') return '$\text{NE555}$';
+      if (type === 'mosfet') return '$\text{2N7000}$';
+      return type;
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('bg-brand-600', 'text-white'));
+      document.getElementById(`tool-${tool}`).classList.add('bg-brand-600', 'text-white');
+      wireStartPin = null;
+    }
+
+    function onMouseDown(opt) {
+      if (currentTool !== 'wire' || !opt.target) return;
+      const targetGroup = opt.target;
+      if (targetGroup && targetGroup.sciData) {
+        if (!wireStartPin) {
+          wireStartPin = targetGroup;
+          showToast('Select second component to connect wire...');
+        } else if (wireStartPin !== targetGroup) {
+          createWire(wireStartPin, targetGroup);
+          wireStartPin = null;
+          showToast('Wire connected!');
+        }
+      }
+    }
+
+    function createWire(objA, objB) {
+      const line = new fabric.Line([objA.left + 40, objA.top + 20, objB.left + 40, objB.top + 20], {
+        stroke: '#06b6d4', strokeWidth: 3, selectable: false, evented: false
+      });
+      line.objA = objA; line.objB = objB;
+      wires.push(line);
+      canvas.add(line);
+      canvas.sendToBack(line);
+      canvas.renderAll();
+      generateTikZCode();
+    }
+
+    function updateWires() {
+      wires.forEach(w => w.set({ x1: w.objA.left + 40, y1: w.objA.top + 20, x2: w.objB.left + 40, y2: w.objB.top + 20 }));
+    }
+
+    function onObjectSelected() {
+      const obj = canvas.getActiveObject();
+      if (!obj || !obj.sciData) return;
+
+      document.getElementById('no-selection-msg').classList.add('hidden');
+      document.getElementById('active-inspector').classList.remove('hidden');
+
+      const data = obj.sciData;
+      document.getElementById('inspect-title').innerText = data.sciType.replace('_', ' ');
+      document.getElementById('prop-label').value = data.labelText || '';
+      document.getElementById('prop-rot').value = Math.round(obj.angle || 0);
+      document.getElementById('prop-scale').value = (obj.scaleX || 1.0).toFixed(1);
+
+      updateMathPreview(data.labelText || '');
+    }
+
+    function onSelectionCleared() {
+      document.getElementById('no-selection-msg').classList.remove('hidden');
+      document.getElementById('active-inspector').classList.add('hidden');
+    }
+
+    function updateActiveObjectProps() {
+      const obj = canvas.getActiveObject();
+      if (!obj || !obj.sciData) return;
+
+      obj.sciData.labelText = document.getElementById('prop-label').value;
+      const rot = parseFloat(document.getElementById('prop-rot').value) || 0;
+      const scale = parseFloat(document.getElementById('prop-scale').value) || 1.0;
+
+      obj.set({ angle: rot, scaleX: scale, scaleY: scale });
+      canvas.renderAll();
+      updateMathPreview(obj.sciData.labelText);
+      generateTikZCode();
+    }
+
+    function deleteSelected() {
+      const activeObjects = canvas.getActiveObjects();
+      if (activeObjects && activeObjects.length > 0) {
+        activeObjects.forEach(obj => {
+          wires = wires.filter(w => {
+            if (w.objA === obj || w.objB === obj) {
+              canvas.remove(w);
+              return false;
+            }
+            return true;
+          });
+          canvas.remove(obj);
+        });
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        onSelectionCleared();
+        generateTikZCode();
+        showToast('Selection deleted');
+      }
+    }
+
+    function duplicateSelected() {
+      const obj = canvas.getActiveObject();
+      if (!obj) return;
+      obj.clone((cloned) => {
+        canvas.discardActiveObject();
+        cloned.set({ left: obj.left + 20, top: obj.top + 20 });
+        cloned.sciData = JSON.parse(JSON.stringify(obj.sciData));
+        canvas.add(cloned);
+        canvas.setActiveObject(cloned);
+        canvas.renderAll();
+        generateTikZCode();
+        showToast('Object duplicated');
+      });
+    }
+
+    function flipSelectedX() {
+      const obj = canvas.getActiveObject();
+      if (obj) {
+        obj.set('flipX', !obj.flipX);
+        canvas.renderAll();
+        generateTikZCode();
+      }
+    }
+
+    function updateMathPreview(str) {
+      const el = document.getElementById('katex-preview');
+      try { katex.render(str || '\text{Preview}', el, { throwOnError: false }); } catch(e) { el.innerText = str; }
+    }
+
+    function generateTikZCode() {
+      const objects = canvas.getObjects();
+      const isStandalone = document.getElementById('standalone-toggle').checked;
+
+      let code = isStandalone ? "\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{circuitikz}
+\begin{document}
+" : "";
+      code += "\begin{tikzpicture}[scale=1.0, >=stealth]
+";
+
+      objects.forEach((obj) => {
+        if (obj.sciData) {
+          const x = (obj.left / 50).toFixed(2);
+          const y = (-obj.top / 50).toFixed(2);
+
+          if (obj.sciData.sciType === 'dimension_ruler') {
+            const widthCm = ((150 * (obj.scaleX || 1.0)) / 50.0).toFixed(1);
+            const x2 = (parseFloat(x) + parseFloat(widthCm)).toFixed(2);
+            code += `  \draw[<->, >=stealth, thick, orange] (${x},${y}) -- (${x2},${y}) node[midway, above] {${obj.sciData.labelText || `$${widthCm}\text{ cm}$`}};
+`;
+          } else {
+            code += `  \node[draw] at (${x},${y}) {${obj.sciData.labelText || obj.sciData.sciType}};
+`;
+          }
+        }
+      });
+
+      wires.forEach(w => {
+        const x1 = (w.objA.left / 50).toFixed(2);
+        const y1 = (-w.objA.top / 50).toFixed(2);
+        const x2 = (w.objB.left / 50).toFixed(2);
+        const y2 = (-w.objB.top / 50).toFixed(2);
+        code += `  \draw[thick, cyan] (${x1},${y1}) -- (${x2},${y2});
+`;
+      });
+
+      code += "\end{tikzpicture}
+";
+      if (isStandalone) code += "\end{document}
+";
+
+      const codeEl = document.getElementById('tikz-code');
+      codeEl.textContent = code;
+      Prism.highlightElement(codeEl);
+    }
+
+    function loadPreset(name) {
+      canvas.clear(); wires = [];
+      addSciObject('beaker');
+      addSciObject('liebig_condenser');
+      addSciObject('dimension_ruler');
+      showToast(`Loaded ${name} preset`);
+    }
+
+    function copyLaTeX() {
+      navigator.clipboard.writeText(document.getElementById('tikz-code').textContent);
+      showToast('TikZ code copied!');
+    }
+
+    function downloadLaTeX() {
+      const blob = new Blob([document.getElementById('tikz-code').textContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'scitikz_experiment.tex';
+      a.click();
+    }
+
+    function clearCanvas() { canvas.clear(); wires = []; generateTikZCode(); }
+    function toggleSnap() { isSnapToGrid = !isSnapToGrid; }
+    
+    function switchTab(t) {
+      ['chem','optics','elec','draw'].forEach(x => document.getElementById(`sec-${x}`).classList.add('hidden'));
+      document.getElementById(`sec-${t}`).classList.remove('hidden');
+    }
+
+    function switchRightTab(t) {
+      ['props','code'].forEach(x => document.getElementById(`rsec-${x}`).classList.add('hidden'));
+      document.getElementById(`rsec-${t}`).classList.remove('hidden');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => toast.classList.add('opacity-0'), 2000);
+    }
+
+    function setupShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if ((e.key === 'Delete' || e.key === 'Backspace') && document.activeElement.tagName !== 'INPUT') {
+          e.preventDefault();
+          deleteSelected();
+        } else if (e.ctrlKey && e.key === 'd') {
+          e.preventDefault();
+          duplicateSelected();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
